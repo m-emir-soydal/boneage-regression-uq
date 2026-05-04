@@ -1,0 +1,11 @@
+data/
+_logs/
+*.executed.ipynb
+__pycache__/
+.cursor/
+.env
+.ipynb_checkpoints/
+node_modules/
+dist/
+build/
+*.log
