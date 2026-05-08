@@ -50,6 +50,56 @@ def mpiw(y_std: np.ndarray, alpha: float = 0.95) -> float:
     return float(np.mean(2.0 * z * y_std))
 
 
+def picp_interval(y_true: np.ndarray, lower: np.ndarray, upper: np.ndarray) -> float:
+    """Prediction interval coverage for precomputed lower/upper bounds."""
+
+    y_true = np.asarray(y_true, dtype=float)
+    lower = np.asarray(lower, dtype=float)
+    upper = np.asarray(upper, dtype=float)
+    inside = (y_true >= lower) & (y_true <= upper)
+    return float(np.mean(inside))
+
+
+def mpiw_interval(lower: np.ndarray, upper: np.ndarray) -> float:
+    """Mean prediction interval width for precomputed lower/upper bounds."""
+
+    lower = np.asarray(lower, dtype=float)
+    upper = np.asarray(upper, dtype=float)
+    return float(np.mean(upper - lower))
+
+
+def conformal_residual_quantile(residuals: np.ndarray, alpha: float = 0.95) -> float:
+    """Split-conformal residual quantile at confidence level alpha.
+
+    Uses the finite-sample conformal quantile:
+      k = ceil((n + 1) * alpha), q_hat = k-th order statistic of residuals.
+    """
+
+    if not 0.0 < alpha < 1.0:
+        raise ValueError(f"alpha must be in (0, 1), got {alpha}")
+
+    residuals = np.asarray(residuals, dtype=float)
+    if residuals.ndim != 1:
+        residuals = residuals.reshape(-1)
+    n = int(residuals.size)
+    if n == 0:
+        raise ValueError("residuals must be non-empty")
+
+    k = int(np.ceil((n + 1) * alpha))
+    q = min(1.0, max(0.0, k / n))
+    return float(np.quantile(residuals, q, method="higher"))
+
+
+def conformal_interval(y_pred: np.ndarray, q_hat: float) -> tuple[np.ndarray, np.ndarray]:
+    """Build symmetric split-conformal intervals around point predictions."""
+
+    y_pred = np.asarray(y_pred, dtype=float)
+    q_hat = float(q_hat)
+    lower = y_pred - q_hat
+    upper = y_pred + q_hat
+    return lower, upper
+
+
 def regression_ece_central(
     y_true: np.ndarray,
     y_mean: np.ndarray,

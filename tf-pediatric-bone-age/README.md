@@ -135,6 +135,48 @@ Built using TensorFlow tf.data for efficient training:
 
 ---
 
+## Uncertainty Quantification
+
+This repository includes two post-training uncertainty quantification (UQ) evaluation paths:
+
+- **MC Dropout** via `scripts/mc_dropout_inference.py`
+- **Split Conformal Prediction** via `scripts/conformal_inference.py`
+
+Both methods write CSV artifacts into `outputs/rsna_boneage_models`.
+
+### Conformal Prediction (New)
+
+The conformal script evaluates pretrained models (`baseline` and `multi`) and computes interval-based metrics including **PICP** and **MPIW**.
+
+From workspace root:
+
+```bash
+./test_conformal_metrics.sh
+```
+
+Optional runtime controls:
+
+- `LEVELS` (default: `0.90,0.95`) confidence levels
+- `SPLITS` (default: `test`) choose `test`, `val`, or `all`
+- `BATCH_SIZE`, `SEED`, `CONDA_ENV`
+- `BONE_AGE_DATA_ROOT` to point to RSNA dataset location
+- `BONE_AGE_TF_OUTPUT_DIR` to override output directory
+- `--limit N` for quick sanity runs
+
+Example:
+
+```bash
+LEVELS=0.95 SPLITS=all ./test_conformal_metrics.sh --limit 200
+```
+
+Generated files per variant:
+
+- `conformal_<variant>_<split>.csv` (per-image predictions + interval bounds)
+- `conformal_metrics_<variant>.csv` (metrics summary rows by split and confidence level)
+- `conformal_report_<variant>.csv` (focused report with `PICP` and `MPIW`)
+
+---
+
 ##  Tech Stack
 
 - Python
