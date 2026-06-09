@@ -1,0 +1,9 @@
+Method,Variant,Alpha,MPIW
+Conformal,Baseline,0.90,40.1837854385376
+Conformal,Multi,0.90,33.08302402496338
+Conformal,Baseline,0.95,49.569584369659424
+Conformal,Multi,0.95,43.71242094039917
+MC Dropout,Baseline,0.90,29.23439024615432
+MC Dropout,Multi,0.90,35.886804163401685
+MC Dropout,Baseline,0.95,34.83492455109623
+MC Dropout,Multi,0.95,42.76176465067581

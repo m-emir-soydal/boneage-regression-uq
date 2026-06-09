@@ -43,13 +43,15 @@ def configure_single_gpu(gpu_index: int = 0) -> None:
     print(f"Using single GPU device: {selected_gpu.name}")
 
 
+_root = Path(__file__).resolve().parent.parent.parent
+
 def resolve_paths(output_dir_arg: Path | None = None) -> tuple[Path, Path, Path, Path]:
     """Resolve data and output paths from arguments/environment."""
 
     data_root = Path(
         os.environ.get(
             "BONE_AGE_DATA_ROOT",
-            "/home/spacing/Emir/Boneage UQ/data/rsna_training",
+            str(_root / "data/rsna_training"),
         )
     ).resolve()
 
@@ -73,13 +75,13 @@ def resolve_paths(output_dir_arg: Path | None = None) -> tuple[Path, Path, Path,
         output_dir_arg
         or os.environ.get(
             "BONE_AGE_OUTPUT_DIR",
-            "/home/spacing/Emir/Boneage UQ/tf-pediatric-bone-age/outputs/rsna_boneage_models",
+            str(_root / "tf-pediatric-bone-age/outputs/rsna_boneage_models"),
         )
     )
     return data_root, train_csv, images_dir, output_dir
 
 
-def build_split(train_csv: Path, images_dir: Path, seed: int = 42) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def build_split(train_csv: Path, images_dir: Path, seed: int = 42) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, float]:
     """Rebuild the train/val/test split used by training/evaluation scripts."""
 
     full_df = pd.read_csv(train_csv)
@@ -89,11 +91,13 @@ def build_split(train_csv: Path, images_dir: Path, seed: int = 42) -> tuple[pd.D
 
     train_df, tmp_df = train_test_split(full_df, test_size=0.20, random_state=seed, stratify=full_df["male"])
     val_df, test_df = train_test_split(tmp_df, test_size=0.50, random_state=seed, stratify=tmp_df["male"])
-    return (
-        train_df.reset_index(drop=True),
-        val_df.reset_index(drop=True),
-        test_df.reset_index(drop=True),
-    )
+    
+    train_df = train_df.reset_index(drop=True)
+    val_df = val_df.reset_index(drop=True)
+    test_df = test_df.reset_index(drop=True)
+    max_age = float(train_df["boneage"].max())
+    
+    return train_df, val_df, test_df, max_age
 
 
 def make_dataset(df: pd.DataFrame, *, multi_input: bool, img_size: tuple[int, int] = (300, 300), batch_size: int = 32) -> tf.data.Dataset:
@@ -134,7 +138,7 @@ def make_dataset(df: pd.DataFrame, *, multi_input: bool, img_size: tuple[int, in
     return ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
 
 
-def deterministic_predict(model: tf.keras.Model, dataset: tf.data.Dataset) -> tuple[np.ndarray, np.ndarray]:
+def deterministic_predict(model: tf.keras.Model, dataset: tf.data.Dataset, max_age: float) -> tuple[np.ndarray, np.ndarray]:
     """Run deterministic model inference and return predictions and labels."""
 
     preds: List[np.ndarray] = []
@@ -146,6 +150,7 @@ def deterministic_predict(model: tf.keras.Model, dataset: tf.data.Dataset) -> tu
             inputs, y = batch[0], batch[-1]
 
         pred = tf.squeeze(model(inputs, training=False), axis=-1).numpy().astype(np.float64)
+        pred = pred * max_age
         preds.append(pred)
         truths.append(y.numpy().astype(np.float64))
     return np.concatenate(preds), np.concatenate(truths)
@@ -246,7 +251,7 @@ def main() -> None:
     print(f"Loading model from {model_path} ...")
     model = tf.keras.models.load_model(model_path, compile=False)
 
-    _, val_df, test_df = build_split(train_csv, images_dir, seed=args.seed)
+    train_df, val_df, test_df, max_age = build_split(train_csv, images_dir, seed=args.seed)
     if args.limit:
         val_df = val_df.head(args.limit).reset_index(drop=True)
         test_df = test_df.head(args.limit).reset_index(drop=True)
@@ -257,7 +262,7 @@ def main() -> None:
 
     multi_input = args.variant == "multi"
     cal_ds = make_dataset(val_df, multi_input=multi_input, batch_size=int(args.batch_size))
-    y_cal_pred, y_cal_true = deterministic_predict(model, cal_ds)
+    y_cal_pred, y_cal_true = deterministic_predict(model, cal_ds, max_age)
     cal_residuals = np.abs(y_cal_true - y_cal_pred)
     print(f"Calibration rows={len(y_cal_true)}")
 
@@ -270,7 +275,7 @@ def main() -> None:
             continue
         df = split_to_df[split]
         ds = make_dataset(df, multi_input=multi_input, batch_size=int(args.batch_size))
-        y_pred, y_true = deterministic_predict(model, ds)
+        y_pred, y_true = deterministic_predict(model, ds, max_age)
         abs_err = np.abs(y_pred - y_true)
 
         per_image = {

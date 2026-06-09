@@ -86,8 +86,9 @@ def conformal_residual_quantile(residuals: np.ndarray, alpha: float = 0.95) -> f
         raise ValueError("residuals must be non-empty")
 
     k = int(np.ceil((n + 1) * alpha))
-    q = min(1.0, max(0.0, k / n))
-    return float(np.quantile(residuals, q, method="higher"))
+    k = min(k, n)
+    sorted_res = np.sort(residuals)
+    return float(sorted_res[k - 1])
 
 
 def conformal_interval(y_pred: np.ndarray, q_hat: float) -> tuple[np.ndarray, np.ndarray]:

@@ -37,7 +37,8 @@ if str(_scripts) not in sys.path:
 import uq_metrics  # noqa: E402
 
 
-DEBUG_LOG_PATH = Path("/home/spacing/Emir/Boneage UQ/.cursor/debug-fa1e2c.log")
+_root = Path(__file__).resolve().parent.parent.parent
+DEBUG_LOG_PATH = _root / ".cursor/debug-fa1e2c.log"
 DEBUG_SESSION_ID = "fa1e2c"
 
 
@@ -51,6 +52,8 @@ def debug_log(*, run_id: str, hypothesis_id: str, location: str, message: str, d
         "data": data,
         "timestamp": int(time.time() * 1000),
     }
+    # Ensure directory exists for debug log
+    DEBUG_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(DEBUG_LOG_PATH, "a", encoding="utf-8") as f:
         f.write(json.dumps(payload) + "\n")
 
@@ -74,7 +77,7 @@ def resolve_paths(output_dir_arg: Path | None = None):
     data_root = Path(
         os.environ.get(
             "BONE_AGE_DATA_ROOT",
-            "/home/spacing/Emir/Boneage UQ/data/rsna_training",
+            str(_root / "data/rsna_training"),
         )
     ).resolve()
 
@@ -98,7 +101,7 @@ def resolve_paths(output_dir_arg: Path | None = None):
         output_dir_arg
         or os.environ.get(
             "BONE_AGE_OUTPUT_DIR",
-            "/home/spacing/Emir/Boneage UQ/tf-pediatric-bone-age/outputs/rsna_boneage_models",
+            str(_root / "tf-pediatric-bone-age/outputs/rsna_boneage_models"),
         )
     )
     return data_root, train_csv, images_dir, output_dir

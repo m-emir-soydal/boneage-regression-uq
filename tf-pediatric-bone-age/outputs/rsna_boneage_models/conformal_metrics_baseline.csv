@@ -1,3 +1,3 @@
 variant,split,model_path,n,n_cal,alpha,q_hat,PICP,MPIW,mae,rmse
-baseline,test,/home/spacing/Emir/Boneage UQ/tf-pediatric-bone-age/outputs/rsna_boneage_models/best_baseline_42-0.041.keras,1262,1261,0.9,167.36751157045364,0.8874801901743264,334.7350231409073,127.26584045782614,133.8186473126754
-baseline,test,/home/spacing/Emir/Boneage UQ/tf-pediatric-bone-age/outputs/rsna_boneage_models/best_baseline_42-0.041.keras,1262,1261,0.95,185.2352979183197,0.9556259904912837,370.4705958366394,127.26584045782614,133.8186473126754
+baseline,test,/home/spacing/Emir/Boneage UQ/tf-pediatric-bone-age/outputs/rsna_boneage_models/best_baseline_42-0.041.keras,1262,1261,0.9,20.0918927192688,0.8938193343898574,40.1837854385376,9.31530459175586,12.020159225183896
+baseline,test,/home/spacing/Emir/Boneage UQ/tf-pediatric-bone-age/outputs/rsna_boneage_models/best_baseline_42-0.041.keras,1262,1261,0.95,24.784792184829712,0.9508716323296355,49.569584369659424,9.31530459175586,12.020159225183896

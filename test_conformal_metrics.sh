@@ -62,6 +62,9 @@ if [[ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]]; then
 elif [[ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]]; then
   # shellcheck disable=SC1091
   source "$HOME/anaconda3/etc/profile.d/conda.sh"
+elif command -v conda >/dev/null 2>&1; then
+  # shellcheck disable=SC1091
+  source "$(conda info --base)/etc/profile.d/conda.sh"
 else
   echo "ERROR: cannot locate conda.sh for activation." >&2
   exit 1

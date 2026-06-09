@@ -22,8 +22,10 @@ The project uses a Conda environment. Ensure you have Conda installed.
 # Recommended environment name: boneageuq
 conda create -n boneageuq python=3.10
 conda activate boneageuq
-pip install -r tf-pediatric-bone-age/requirements.txt
+pip install -r requirements.txt
 ```
+
+The shell scripts (`train_tf.sh`, etc.) now automatically try to locate and source `conda.sh` from common locations or using `conda info --base`, making them more portable across different system configurations.
 
 ### Data Setup (Manual Step)
 
